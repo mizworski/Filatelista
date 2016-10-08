@@ -29,7 +29,7 @@ struct compare {
         return lesser;
     }
 };
-
+/*
 struct compare_temp {
     int as_year(const std::tuple<int, std::string, std::pair<std::string, double>, std::string> &key) const {
         return std::get<0>(key);
@@ -45,6 +45,8 @@ struct compare_temp {
         return as_year(t1) < as_year(t2);
     }
 };
+ */
+
 /**
  * Parses raw line with stamp and inserts it values to retval tuple containing:
  * @param raw_line line with stamp data
@@ -98,8 +100,8 @@ bool parse_stamp(const std::string raw_line,
 bool parse_query(const std::string raw_line,
                  std::pair<int, int> *query){
     const std::string query_format = " *[0-9]+ + [0-9]+ *";
-    const lower_bound_regex_index = 1;
-    const upper_bound_regex_index = 2;
+    const int lower_bound_regex_index = 1;
+    const int upper_bound_regex_index = 2;
 
     std::smatch matches;
     std::regex expression(query_format);
@@ -125,10 +127,20 @@ void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, st
 
 void print_stamps(std::pair<int, int> query,
                   std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps) {
-    auto it = std::lower_bound(stamps.begin(), stamps.end(), query.first, compare_temp());
-    auto it2 = std::upper_bound(stamps.begin(), stamps.end(), query.second, compare_temp());
+//    auto it = std::lower_bound(stamps.begin(), stamps.end(), query.first, compare_temp());
+//    auto it2 = std::upper_bound(stamps.begin(), stamps.end(), query.second, compare_temp());
 
-    std::for_each(it, it2, print_stamp);
+    std::pair<std::string, double> p1("", 0);
+
+    std::tuple<int, std::string, std::pair<std::string, double>, std::string> t1 =
+            std::make_tuple(query.first, "", p1, "");
+    auto it1 = stamps.lower_bound(t1);
+
+    std::tuple<int, std::string, std::pair<std::string, double>, std::string> t2 =
+            std::make_tuple(query.second + 1, "", p1, "");
+    auto it2 = stamps.lower_bound(t2);
+
+    std::for_each(it1, it2, print_stamp);
 }
 
 int main() {
@@ -148,7 +160,7 @@ int main() {
                 querying = parse_query(raw_line, &query);
                 print_stamps(query, stamps);
             }
-            if (!querying) {
+            if (!querying && !inserting) {
                 fprintf(stderr, "chuj");
             }
         } else {
