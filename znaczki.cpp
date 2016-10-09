@@ -10,8 +10,6 @@ const int post_office_name_index = 1;
 const int stamp_value_index = 2;
 const int stamp_name_index = 3;
 
-using namespace boost;
-
 struct compare {
     bool operator()(const std::tuple<int, std::string, std::pair<std::string, double>, std::string> lhs,
                     const std::tuple<int, std::string, std::pair<std::string, double>, std::string> rhs) const {
