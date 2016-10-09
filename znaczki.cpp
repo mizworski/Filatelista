@@ -67,7 +67,7 @@ bool parse_stamp(const std::string raw_line,
 
     const std::string stamp_format = "^[ ]*" // spaces at the beginning
             "([^ ]+( +[^ ]+)*) +" // stamp name
-            "([0-9]+([\\.|,][0-9]+)?) +" // stamp value
+            "([0-9]{1,15}([\\.|,][0-9]+)?) +" // stamp value
             "([0-9]{4}) +" // stamp year
             "([^ ]*?[^0-9][ ^]*( +[^ ]+)*)" // country of post office name
             " *$"; // spaces at the end
@@ -115,7 +115,6 @@ bool parse_query(const std::string raw_line,
     std::smatch matches;
     std::regex expression(query_format);
     if (regex_search(raw_line, matches, expression)) {
-        // todo: sprawdz zakresy inta
         query->first = boost::lexical_cast<int>(matches[lower_bound_regex_index]);
         query->second = boost::lexical_cast<int>(matches[upper_bound_regex_index]);
 
