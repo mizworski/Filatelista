@@ -163,12 +163,12 @@ int main() {
     for (int line_count = 1; std::getline(std::cin, raw_line); line_count++) {
         std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
         std::pair<int, int> query;
-        if (!querying && parse_stamp(raw_line, &stamp )) { // line is a stamp
+        if (!querying && parse_stamp(raw_line, &stamp) && (stamps.find(stamp) == stamps.end())) { // line is a stamp and stamp is not in set already
             stamps.insert(stamp);
-        } else if (parse_query(raw_line, &query)){ // line is a request
+        } else if (parse_query(raw_line, &query)) { // line is a request
             querying = true;
             print_stamps(query, stamps);
-        } else {// wrong input
+        } else { // wrong input
             fprintf(stderr, "%s %d:%s\n", error_message.c_str(), line_count, raw_line.c_str());
         }
     }
