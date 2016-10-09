@@ -83,6 +83,9 @@ bool parse_stamp(const std::string raw_line,
         // save value string
         std::string value_string = matches[stamp_value_regex_index];
         std::get<stamp_value_index>(*retval).first = matches[stamp_value_regex_index];
+        if (value_string[0] == '0') { // trailing zeros are treated as error
+            return false;
+        }
         // save value number
         if ((pos = value_string.find_first_of(',')) != std::string::npos) {
             value_string[pos] = '.';
