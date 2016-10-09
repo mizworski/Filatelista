@@ -5,6 +5,9 @@
 #include <regex>
 #include <boost/lexical_cast.hpp>
 
+typedef std::pair<std::string, double> stamp_value;
+typedef std::tuple<int, std::string, stamp_value, std::string> stamp;
+
 const int stamp_year_index = 0;
 const int post_office_name_index = 1;
 const int stamp_value_index = 2;
@@ -18,18 +21,24 @@ const int stamp_name_index = 3;
  * True - if left hand side is lesser than right hand side
  * False - othwerise
  */
-bool comparer(const std::tuple<int, std::string, std::pair<std::string, double>, std::string> lhs,
-              const std::tuple<int, std::string, std::pair<std::string, double>, std::string> rhs) {
+bool comparer(const stamp lhs, const stamp rhs) {
     bool lesser = false;
+    std::string lhs_name = std::get<stamp_name_index>(lhs);
+    std::string rhs_name = std::get<stamp_name_index>(rhs);
 
-    lesser = std::get<stamp_name_index>(lhs) < std::get<stamp_name_index>(rhs) ? true :
-             std::get<stamp_name_index>(lhs) > std::get<stamp_name_index>(rhs) ? false : lesser;
-    lesser = std::get<stamp_value_index>(lhs).second < std::get<stamp_value_index>(rhs).second ? true :
-             std::get<stamp_value_index>(lhs).second > std::get<stamp_value_index>(rhs).second ? false : lesser;
-    lesser = std::get<post_office_name_index>(lhs) < std::get<post_office_name_index>(rhs) ? true :
-             std::get<post_office_name_index>(lhs) > std::get<post_office_name_index>(rhs) ? false : lesser;
-    lesser = std::get<stamp_year_index>(lhs) < std::get<stamp_year_index>(rhs) ? true :
-             std::get<stamp_year_index>(lhs) > std::get<stamp_year_index>(rhs) ? false : lesser;
+    double lhs_value = std::get<stamp_value_index>(lhs).second;
+    double rhs_value = std::get<stamp_value_index>(rhs).second;
+
+    std::string lhs_office_name = std::get<post_office_name_index>(lhs);
+    std::string rhs_office_name = std::get<post_office_name_index>(rhs);
+
+    int lhs_year = std::get<stamp_year_index>(lhs);
+    int rhs_year = std::get<stamp_year_index>(rhs);
+
+    lesser = lhs_name < rhs_name ? true : lhs_name > rhs_name ? false : lesser;
+    lesser = lhs_value < rhs_value ? true : lhs_value > rhs_value ? false : lesser;
+    lesser = lhs_office_name < rhs_office_name ? true : lhs_office_name > rhs_office_name ? false : lesser;
+    lesser = lhs_year < rhs_year ? true : lhs_year > rhs_year ? false : lesser;
 
     return lesser;
 }
@@ -44,8 +53,7 @@ bool comparer(const std::tuple<int, std::string, std::pair<std::string, double>,
  * True - if raw_line matches stamp format
  * False - if raw_line doesnt match stamp format
  */
-bool parse_stamp(const std::string raw_line,
-                 std::tuple<int, std::string, std::pair<std::string, double>, std::string> *retval) {
+bool parse_stamp(const std::string raw_line, stamp *retval) {
     std::smatch matches;
     const int stamp_name_regex_index = 1;
     const int stamp_value_regex_index = 3;
@@ -95,8 +103,7 @@ bool parse_stamp(const std::string raw_line,
  * True - if line could be parsed into pair and fulfill constraints
  * False - otherwise
  */
-bool parse_query(const std::string raw_line,
-                 std::pair<int, int> *query) {
+bool parse_query(const std::string raw_line, std::pair<int, int> *query) {
     const std::string query_format = " *([0-9]{4}) +([0-9]{4}) *";
     const int lower_bound_regex_index = 1;
     const int upper_bound_regex_index = 2;
@@ -115,7 +122,7 @@ bool parse_query(const std::string raw_line,
  * Prints stamp properties to stdout.
  * @param stamp element to print
  */
-void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp) {
+void print_stamp(stamp stamp) {
     int year = std::get<stamp_year_index>(stamp);
     std::string post_office = std::get<post_office_name_index>(stamp);
     std::string value = std::get<stamp_value_index>(stamp).first;
@@ -129,40 +136,25 @@ void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, st
  * @param query pair with range of years
  * @param stamps set of stamps on which query will be called
  */
-void print_stamps(std::pair<int, int> query,
-
-                  std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
-                          bool (*)(std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
-                                   std::tuple<int, std::string, std::pair<std::string, double>, std::string>)> stamps) {
-    std::pair<std::string, double> p1("", 0);
-
-    std::tuple<int, std::string, std::pair<std::string, double>, std::string> t1 =
-            std::make_tuple(query.first, "", p1, "");
-    auto it1 = stamps.lower_bound(t1);
-
-    std::tuple<int, std::string, std::pair<std::string, double>, std::string> t2 =
-            std::make_tuple(query.second + 1, "", p1, "");
-    auto it2 = stamps.lower_bound(t2);
+void print_stamps(std::pair<int, int> query, std::set<stamp, bool (*)(stamp, stamp)> stamps) {
+    std::pair<std::string, double> pair("", 0);
+    stamp lower_bound_tuple = std::make_tuple(query.first, "", pair, "");
+    stamp upper_bound_tuple = std::make_tuple(query.second + 1, "", pair, "");
+    auto it1 = stamps.lower_bound(lower_bound_tuple);
+    auto it2 = stamps.lower_bound(upper_bound_tuple);
 
     std::for_each(it1, it2, print_stamp);
 }
 
 int main() {
-    std::string raw_line;
-
-    bool (*comparer_pointer)(const std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
-                             const std::tuple<int, std::string, std::pair<std::string, double>, std::string>) = comparer;
-
-    std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
-            bool (*)(std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
-                     std::tuple<int, std::string, std::pair<std::string, double>, std::string>)> stamps(
-            comparer_pointer);
-
-    bool querying = false;
     const std::string error_message = "Error in line";
+    std::string raw_line;
+    bool querying = false;
+    bool (*comparer_pointer)(const stamp, const stamp) = comparer;
+    std::set<stamp, bool (*)(stamp, stamp)> stamps(comparer_pointer);
 
     for (int line_count = 1; std::getline(std::cin, raw_line); line_count++) {
-        std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
+        stamp stamp;
         std::pair<int, int> query;
 
         if (!querying && parse_stamp(raw_line, &stamp) &&
