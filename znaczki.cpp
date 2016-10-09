@@ -186,7 +186,7 @@ int main() {
          */
 
         if (!(isQuery || isAdding)) {
-            fprintf(stderr, "%s %d %s\n", error_message.c_str(), line_count, raw_line.c_str());
+            fprintf(stderr, "%s %d:%s\n", error_message.c_str(), line_count, raw_line.c_str());
         }
     }
 
