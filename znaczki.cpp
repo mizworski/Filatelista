@@ -49,7 +49,7 @@ struct compare_temp {
 
 /**
  * Parses raw line with stamp and inserts it values to retval tuple containing:
- * @param raw_line line with stamp data
+ * @param raw_line line with stamp data //todo line to be parsed? it isnt always line with stamp data.
  * @param retval tuple to place result in there, format:
  * < year, post_office_name / country, < value {string}, value {float}>, stamp_name_index>
  *
@@ -58,7 +58,7 @@ struct compare_temp {
  * false - if raw_line doesnt match stamp format
  */
 bool parse_stamp(const std::string raw_line,
-                 std::tuple<int, std::string, std::pair <std::string, double>, std::string>* retval){
+                 std::tuple<int, std::string, std::pair<std::string, double>, std::string> *retval) {
     std::smatch matches;
     const int stamp_name_regex_index = 1;
     const int stamp_value_regex_index = 3;
@@ -74,7 +74,7 @@ bool parse_stamp(const std::string raw_line,
 
     std::regex expression(stamp_format);
 
-    if(regex_search(raw_line, matches, expression)){
+    if (regex_search(raw_line, matches, expression)) {
 
         // todo: ogarnac zakresy inta
         std::get<stamp_year_index>(*retval) = boost::lexical_cast<int>(matches[stamp_year_regex_index]);
@@ -84,13 +84,12 @@ bool parse_stamp(const std::string raw_line,
 
         std::get<stamp_name_index>(*retval) = matches[stamp_name_regex_index];
         return true;
-    }
-    else return false;
+    } else return false;
 }
 
 /**
  * Parse line with query
- * @param raw_line line with query command
+ * @param raw_line line with query command //todo line to be parsed? it isnt always line with query data.
  * @param query pointer to a pair where command should be inserted into
  *
  * @return
@@ -98,38 +97,42 @@ bool parse_stamp(const std::string raw_line,
  * False - otherwise
  */
 bool parse_query(const std::string raw_line,
-                 std::pair<int, int> *query){
+                 std::pair<int, int> *query) {
     const std::string query_format = " *[0-9]+ + [0-9]+ *";
     const int lower_bound_regex_index = 1;
     const int upper_bound_regex_index = 2;
 
     std::smatch matches;
     std::regex expression(query_format);
-    if(regex_search(raw_line, matches, expression)){
+    if (regex_search(raw_line, matches, expression)) {
         // todo: sprawdz zakresy inta
         query->first = boost::lexical_cast<int>(matches[lower_bound_regex_index]);
         query->second = boost::lexical_cast<int>(matches[upper_bound_regex_index]);
 
         return query->first <= query->second; //legitimate request only if lower bound is not bigger then upper bound
-    }
-    else return false;
+    } else return false;
 }
 
-
+/**
+ * Prints stamp properties to stdout. *
+ * @param stamp element to print
+ */
 void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp) {
     std::cout
-    << std::get<stamp_year_index>(stamp)
-    << std::get<post_office_name_index>(stamp)
-    << std::get<stamp_value_index>(stamp).first
-    << std::get<stamp_name_index>(stamp)
-    << std::endl;
+            << std::get<stamp_year_index>(stamp)
+            << std::get<post_office_name_index>(stamp)
+            << std::get<stamp_value_index>(stamp).first
+            << std::get<stamp_name_index>(stamp)
+            << std::endl;
 }
 
+/**
+ * Prints all stamps that match query requirements. *
+ * @param query pair with range of years
+ * @param stamps set of stamps on which query will be called
+ */
 void print_stamps(std::pair<int, int> query,
                   std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps) {
-//    auto it = std::lower_bound(stamps.begin(), stamps.end(), query.first, compare_temp());
-//    auto it2 = std::upper_bound(stamps.begin(), stamps.end(), query.second, compare_temp());
-
     std::pair<std::string, double> p1("", 0);
 
     std::tuple<int, std::string, std::pair<std::string, double>, std::string> t1 =
@@ -145,32 +148,45 @@ void print_stamps(std::pair<int, int> query,
 
 int main() {
     std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps;
-    std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
-    std::pair<int, int> query;
-    bool inserting;
     bool querying = false;
+    bool isQuery = false;
+    bool isAdding = false;
     std::string raw_line;
+    int line_count = 0;
+    const std::string error_message = "Error in line";
 
     while (std::getline(std::cin, raw_line)) {
-        if (!querying) {
-            inserting = parse_stamp(raw_line, &stamp);
-            if (inserting) {
-                stamps.insert(stamp);
-            } else {
-                querying = parse_query(raw_line, &query);
-                print_stamps(query, stamps);
-            }
-            if (!querying && !inserting) {
-                fprintf(stderr, "chuj");
-            }
-        } else {
-            querying = parse_query(raw_line, &query);
+        std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
+        std::pair<int, int> query;
+        ++line_count;
 
-            if (querying) {
-                print_stamps(query, stamps);
-            } else {
-                fprintf(stderr, "chuj");
+        if (!querying) {
+            isAdding = parse_stamp(raw_line, &stamp);
+            if (isAdding) {
+                stamps.insert(stamp);
             }
+        }
+
+        if (!isAdding) {
+            isQuery = parse_query(raw_line, &query);
+
+            if (isQuery) {
+                print_stamps(query, stamps);
+            }
+        }
+
+        querying = querying || (!isAdding && isQuery);
+
+        // or we can go with:
+        /*
+         if (!querying) {
+            querying = !isAdding && isQuery;
+         }
+
+         */
+
+        if (!(isQuery || isAdding)) {
+            fprintf(stderr, "%s %d %s\n", error_message.c_str(), line_count, raw_line.c_str());
         }
     }
 
