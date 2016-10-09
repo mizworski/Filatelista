@@ -149,8 +149,6 @@ void print_stamps(std::pair<int, int> query,
 int main() {
     std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps;
     bool querying = false;
-    bool isQuery = false;
-    bool isAdding = false;
     std::string raw_line;
     int line_count = 0;
     const std::string error_message = "Error in line";
@@ -160,34 +158,15 @@ int main() {
         std::pair<int, int> query;
         ++line_count;
 
-        if (!querying) {
-            isAdding = parse_stamp(raw_line, &stamp);
-            if (isAdding) {
-                stamps.insert(stamp);
-            }
+        if (!querying && parse_stamp(raw_line, &stamp ))
+            stamps.insert(stamp);
+        else if (parse_query(raw_line, &query)){
+            querying = true;
+            print_stamps(query, stamps);
         }
-
-        if (!isAdding) {
-            isQuery = parse_query(raw_line, &query);
-
-            if (isQuery) {
-                print_stamps(query, stamps);
-            }
-        }
-
-        querying = querying || (!isAdding && isQuery);
-
-        // or we can go with:
-        /*
-         if (!querying) {
-            querying = !isAdding && isQuery;
-         }
-
-         */
-
-        if (!(isQuery || isAdding)) {
+        else
             fprintf(stderr, "%s %d:%s\n", error_message.c_str(), line_count, raw_line.c_str());
-        }
+
     }
 
     return 0;
