@@ -73,8 +73,7 @@ bool parse_stamp(const std::string raw_line,
     std::regex expression(stamp_format);
     std::size_t pos;
     if (regex_search(raw_line, matches, expression)) {
-
-        // todo: ogarnac zakresy inta
+        // save year and office name
         std::get<stamp_year_index>(*retval) = boost::lexical_cast<int>(matches[stamp_year_regex_index]);
         std::get<post_office_name_index>(*retval) = matches[post_office_name_regex_index];
 
@@ -84,12 +83,14 @@ bool parse_stamp(const std::string raw_line,
         if (value_string[0] == '0' && value_string.size()!= 1 && isdigit(value_string[1])) { // trailing zeros are treated as error
             return false;
         }
+
         // save value number
         if ((pos = value_string.find_first_of(',')) != std::string::npos) {
             value_string[pos] = '.';
         }
         std::get<stamp_value_index>(*retval).second = boost::lexical_cast<double>(value_string);
 
+        // save stamp name
         std::get<stamp_name_index>(*retval) = matches[stamp_name_regex_index];
         return true;
     } else return false;
