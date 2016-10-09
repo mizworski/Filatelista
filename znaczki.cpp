@@ -68,7 +68,7 @@ bool parse_stamp(const std::string raw_line,
     const std::string stamp_format = "^[ ]*" // spaces at the beginning
             "([^ ]+( +[^ ]+)*) +" // stamp name
             "([0-9]+([\\.|,][0-9]+)?) +" // stamp value
-            "([0-9]+) +" // stamp year
+            "([0-9]{4}) +" // stamp year
             "([^ ]*?[^0-9][ ^]*( +[^ ]+)*)" // country of post office name
             " *$"; // spaces at the end
 
@@ -105,7 +105,7 @@ bool parse_stamp(const std::string raw_line,
  */
 bool parse_query(const std::string raw_line,
                  std::pair<int, int> *query) {
-    const std::string query_format = " *([0-9]+) +([0-9]+) *";
+    const std::string query_format = " *([0-9]{4}) +([0-9]{4}) *";
     const int lower_bound_regex_index = 1;
     const int upper_bound_regex_index = 2;
 
