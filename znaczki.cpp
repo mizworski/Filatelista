@@ -98,7 +98,7 @@ bool parse_stamp(const std::string raw_line,
  */
 bool parse_query(const std::string raw_line,
                  std::pair<int, int> *query) {
-    const std::string query_format = " *[0-9]+ + [0-9]+ *";
+    const std::string query_format = " *([0-9]+) +([0-9]+) *";
     const int lower_bound_regex_index = 1;
     const int upper_bound_regex_index = 2;
 
