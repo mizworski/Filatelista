@@ -10,40 +10,29 @@ const int post_office_name_index = 1;
 const int stamp_value_index = 2;
 const int stamp_name_index = 3;
 
-struct compare {
-    bool operator()(const std::tuple<int, std::string, std::pair<std::string, double>, std::string> lhs,
-                    const std::tuple<int, std::string, std::pair<std::string, double>, std::string> rhs) const {
-        bool lesser = true;
-
-        lesser = std::get<stamp_name_index>(lhs) < std::get<stamp_name_index>(rhs) ? true :
-                 std::get<stamp_name_index>(lhs) > std::get<stamp_name_index>(rhs) ? false : lesser;
-        lesser = std::get<stamp_value_index>(lhs).second < std::get<stamp_value_index>(rhs).second ? true :
-                 std::get<stamp_value_index>(lhs).second > std::get<stamp_value_index>(rhs).second ? false : lesser;
-        lesser = std::get<post_office_name_index>(lhs) < std::get<post_office_name_index>(rhs) ? true :
-                 std::get<post_office_name_index>(lhs) > std::get<post_office_name_index>(rhs) ? false : lesser;
-        lesser = std::get<stamp_year_index>(lhs) < std::get<stamp_year_index>(rhs) ? true :
-                 std::get<stamp_year_index>(lhs) > std::get<stamp_year_index>(rhs) ? false : lesser;
-
-        return lesser;
-    }
-};
-/*
-struct compare_temp {
-    int as_year(const std::tuple<int, std::string, std::pair<std::string, double>, std::string> &key) const {
-        return std::get<0>(key);
-    }
-
-    int as_year(int t) const {
-        return t;
-    }
-
-    template<typename T1, typename T2>
-    bool operator()(T1 const &t1,
-                    T2 const &t2) const {
-        return as_year(t1) < as_year(t2);
-    }
-};
+/**
+ * Comparing function for two stamps.
+ * @param lhs left hand side stamp
+ * @param rhs right hand side stamp
+ * @return
+ * True - if left hand side is lesser than right hand side
+ * False - othwerise
  */
+bool comparer(const std::tuple<int, std::string, std::pair<std::string, double>, std::string> lhs,
+              const std::tuple<int, std::string, std::pair<std::string, double>, std::string> rhs) {
+    bool lesser = false;
+
+    lesser = std::get<stamp_name_index>(lhs) < std::get<stamp_name_index>(rhs) ? true :
+             std::get<stamp_name_index>(lhs) > std::get<stamp_name_index>(rhs) ? false : lesser;
+    lesser = std::get<stamp_value_index>(lhs).second < std::get<stamp_value_index>(rhs).second ? true :
+             std::get<stamp_value_index>(lhs).second > std::get<stamp_value_index>(rhs).second ? false : lesser;
+    lesser = std::get<post_office_name_index>(lhs) < std::get<post_office_name_index>(rhs) ? true :
+             std::get<post_office_name_index>(lhs) > std::get<post_office_name_index>(rhs) ? false : lesser;
+    lesser = std::get<stamp_year_index>(lhs) < std::get<stamp_year_index>(rhs) ? true :
+             std::get<stamp_year_index>(lhs) > std::get<stamp_year_index>(rhs) ? false : lesser;
+
+    return lesser;
+}
 
 /**
  * Parses raw line with stamp and inserts it values to retval tuple containing:
@@ -80,7 +69,8 @@ bool parse_stamp(const std::string raw_line,
         // save value string
         std::string value_string = matches[stamp_value_regex_index];
         std::get<stamp_value_index>(*retval).first = matches[stamp_value_regex_index];
-        if (value_string[0] == '0' && value_string.size()!= 1 && isdigit(value_string[1])) { // trailing zeros are treated as error
+        if (value_string[0] == '0' && value_string.size() != 1 &&
+            isdigit(value_string[1])) { // trailing zeros are treated as error
             return false;
         }
 
@@ -122,7 +112,7 @@ bool parse_query(const std::string raw_line,
 }
 
 /**
- * Prints stamp properties to stdout. *
+ * Prints stamp properties to stdout.
  * @param stamp element to print
  */
 void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp) {
@@ -135,12 +125,15 @@ void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, st
 }
 
 /**
- * Prints all stamps that match query requirements. *
+ * Prints all stamps that match query requirements.
  * @param query pair with range of years
  * @param stamps set of stamps on which query will be called
  */
 void print_stamps(std::pair<int, int> query,
-                  std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps) {
+
+                  std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
+                          bool (*)(std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
+                                   std::tuple<int, std::string, std::pair<std::string, double>, std::string>)> stamps) {
     std::pair<std::string, double> p1("", 0);
 
     std::tuple<int, std::string, std::pair<std::string, double>, std::string> t1 =
@@ -156,7 +149,14 @@ void print_stamps(std::pair<int, int> query,
 
 int main() {
     std::string raw_line;
-    std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps;
+
+    bool (*comparer_pointer)(const std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
+                             const std::tuple<int, std::string, std::pair<std::string, double>, std::string>) = comparer;
+
+    std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
+            bool (*)(std::tuple<int, std::string, std::pair<std::string, double>, std::string>,
+                     std::tuple<int, std::string, std::pair<std::string, double>, std::string>)> stamps(
+            comparer_pointer);
 
     bool querying = false;
     const std::string error_message = "Error in line";
@@ -164,7 +164,9 @@ int main() {
     for (int line_count = 1; std::getline(std::cin, raw_line); line_count++) {
         std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
         std::pair<int, int> query;
-        if (!querying && parse_stamp(raw_line, &stamp) && (stamps.find(stamp) == stamps.end())) { // line is a stamp and stamp is not in set already
+
+        if (!querying && parse_stamp(raw_line, &stamp) &&
+            !(stamps.find(stamp) != stamps.end())) { // line is a stamp and stamp is not in set already
             stamps.insert(stamp);
         } else if (parse_query(raw_line, &query)) { // line is a request
             querying = true;
