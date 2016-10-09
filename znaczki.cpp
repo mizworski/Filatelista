@@ -147,24 +147,22 @@ void print_stamps(std::pair<int, int> query,
 }
 
 int main() {
-    std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps;
-    bool querying = false;
     std::string raw_line;
-    int line_count = 0;
+    std::set<std::tuple<int, std::string, std::pair<std::string, double>, std::string>, compare> stamps;
+
+    bool querying = false;
     const std::string error_message = "Error in line";
 
-    while (std::getline(std::cin, raw_line)) {
+    for (int line_count = 1; std::getline(std::cin, raw_line); line_count++ ) {
         std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
         std::pair<int, int> query;
-        ++line_count;
-
-        if (!querying && parse_stamp(raw_line, &stamp ))
+        if (!querying && parse_stamp(raw_line, &stamp )) // line is a stamp
             stamps.insert(stamp);
-        else if (parse_query(raw_line, &query)){
+        else if (parse_query(raw_line, &query)){ // line is a request
             querying = true;
             print_stamps(query, stamps);
         }
-        else
+        else // wrong input
             fprintf(stderr, "%s %d:%s\n", error_message.c_str(), line_count, raw_line.c_str());
 
     }
