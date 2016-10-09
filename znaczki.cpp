@@ -128,12 +128,12 @@ bool parse_query(const std::string raw_line,
  * @param stamp element to print
  */
 void print_stamp(std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp) {
-    std::cout
-            << std::get<stamp_year_index>(stamp)
-            << std::get<post_office_name_index>(stamp)
-            << std::get<stamp_value_index>(stamp).first
-            << std::get<stamp_name_index>(stamp)
-            << std::endl;
+    int year = std::get<stamp_year_index>(stamp);
+    std::string post_office = std::get<post_office_name_index>(stamp);
+    std::string value = std::get<stamp_value_index>(stamp).first;
+    std::string name = std::get<stamp_name_index>(stamp);
+
+    fprintf(stdout, "%d %s %s %s\n", year, post_office.c_str(), value.c_str(), name.c_str());
 }
 
 /**
