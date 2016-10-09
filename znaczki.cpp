@@ -49,13 +49,13 @@ struct compare_temp {
 
 /**
  * Parses raw line with stamp and inserts it values to retval tuple containing:
- * @param raw_line line with stamp data //todo line to be parsed? it isnt always line with stamp data.
+ * @param raw_line line to parse if it is of correct format
  * @param retval tuple to place result in there, format:
  * < year, post_office_name / country, < value {string}, value {float}>, stamp_name_index>
  *
  * @return boolean
- * true - if raw_line matches stamp format
- * false - if raw_line doesnt match stamp format
+ * True - if raw_line matches stamp format
+ * False - if raw_line doesnt match stamp format
  */
 bool parse_stamp(const std::string raw_line,
                  std::tuple<int, std::string, std::pair<std::string, double>, std::string> *retval) {
@@ -69,18 +69,24 @@ bool parse_stamp(const std::string raw_line,
             "([^ ]+( +[^ ]+)*) +" // stamp name
             "([0-9]+([\\.|,][0-9]+)?) +" // stamp value
             "([0-9]+) +" // stamp year
-            "([^ ]*?[^0-9][ ^]*)" // country of post office name
+            "([^ ]*?[^0-9][ ^]*( +[^ ]+)*)" // country of post office name
             " *$"; // spaces at the end
 
     std::regex expression(stamp_format);
-
+    std::size_t pos;
     if (regex_search(raw_line, matches, expression)) {
-
         // todo: ogarnac zakresy inta
         std::get<stamp_year_index>(*retval) = boost::lexical_cast<int>(matches[stamp_year_regex_index]);
         std::get<post_office_name_index>(*retval) = matches[post_office_name_regex_index];
+
+        // save value string
+        std::string value_string = matches[stamp_value_regex_index];
         std::get<stamp_value_index>(*retval).first = matches[stamp_value_regex_index];
-        // todo: zwroc wartosc z napisu
+        // save value number
+        if ((pos = value_string.find_first_of(',')) != std::string::npos) {
+            value_string[pos] = '.';
+        }
+        std::get<stamp_value_index>(*retval).second = boost::lexical_cast<double>(value_string);
 
         std::get<stamp_name_index>(*retval) = matches[stamp_name_regex_index];
         return true;
@@ -88,8 +94,8 @@ bool parse_stamp(const std::string raw_line,
 }
 
 /**
- * Parse line with query
- * @param raw_line line with query command //todo line to be parsed? it isnt always line with query data.
+ * Parses line with query
+ * @param raw_line line to parse if it is of correct format
  * @param query pointer to a pair where command should be inserted into
  *
  * @return
@@ -156,15 +162,16 @@ int main() {
     for (int line_count = 1; std::getline(std::cin, raw_line); line_count++ ) {
         std::tuple<int, std::string, std::pair<std::string, double>, std::string> stamp;
         std::pair<int, int> query;
-        if (!querying && parse_stamp(raw_line, &stamp )) // line is a stamp
+        if (!querying && parse_stamp(raw_line, &stamp )) { // line is a stamp
             stamps.insert(stamp);
+        }
         else if (parse_query(raw_line, &query)){ // line is a request
             querying = true;
             print_stamps(query, stamps);
         }
-        else // wrong input
+        else {// wrong input
             fprintf(stderr, "%s %d:%s\n", error_message.c_str(), line_count, raw_line.c_str());
-
+        }
     }
 
     return 0;
