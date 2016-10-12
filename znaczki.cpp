@@ -157,8 +157,7 @@ int main() {
         stamp stamp;
         std::pair<int, int> query;
 
-        if (!querying && parse_stamp(raw_line, &stamp) &&
-            !(stamps.find(stamp) != stamps.end())) { // line is a stamp and stamp is not in set already
+        if (!querying && parse_stamp(raw_line, &stamp)) { // line is a stamp and stamp is not in set already
             stamps.insert(stamp);
         } else if (parse_query(raw_line, &query)) { // line is a request
             querying = true;
