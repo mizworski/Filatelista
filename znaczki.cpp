@@ -134,9 +134,9 @@ void print_stamp(stamp stamp) {
 /**
  * Prints all stamps that match query requirements.
  * @param query pair with range of years
- * @param stamps set of stamps on which query will be called
+ * @param stamps multiset of stamps on which query will be called
  */
-void print_stamps(std::pair<int, int> query, std::set<stamp, bool (*)(stamp, stamp)> stamps) {
+void print_stamps(std::pair<int, int> query, std::multiset<stamp, bool (*)(stamp, stamp)> stamps) {
     std::pair<std::string, double> pair("", 0);
     stamp lower_bound_tuple = std::make_tuple(query.first, "", pair, "");
     stamp upper_bound_tuple = std::make_tuple(query.second + 1, "", pair, "");
@@ -151,13 +151,13 @@ int main() {
     std::string raw_line;
     bool querying = false;
     bool (*comparer_pointer)(const stamp, const stamp) = comparer;
-    std::set<stamp, bool (*)(stamp, stamp)> stamps(comparer_pointer);
+    std::multiset<stamp, bool (*)(stamp, stamp)> stamps(comparer_pointer);
 
     for (int line_count = 1; std::getline(std::cin, raw_line); line_count++) {
         stamp stamp;
         std::pair<int, int> query;
 
-        if (!querying && parse_stamp(raw_line, &stamp)) { // line is a stamp and stamp is not in set already
+        if (!querying && parse_stamp(raw_line, &stamp)) { // line is a stamp
             stamps.insert(stamp);
         } else if (parse_query(raw_line, &query)) { // line is a request
             querying = true;
